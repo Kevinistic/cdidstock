@@ -13,12 +13,17 @@ local LocalPlayer = Players.LocalPlayer
 local Config = {
     Enabled = true,
 	AntiAFKEnabled = true,
+    RolePingEnabled = true, -- if you want to ping a role in the webhook
     Webhook = "https://discord.com/api/webhooks/...", -- replace with your webhook
     Colors = {
         Common = 0x5AC73C,
         Rare = 0x3158A8,
         Epic = 0xbf1ec8,
         Legendary = 0xd09c17,
+    },
+    RolePings = {
+        Epic = "1234567890", -- replace with your role ID
+        Legendary = "0987654321" -- replace with your role ID
     }
 }
 
@@ -27,10 +32,23 @@ local function GetTimestamp()
     return DateTime.now():ToIsoDate()
 end
 
-local function SendWebhook(Title: string, Content: string, Color: number)
+local function SendWebhook(Title: string, Content: string, Color: number, rarities: {string})
     if not Config.Enabled then return end
 
+    local mentions = {}
+    if Config.RolePingEnabled then
+        for _, rarity in ipairs(rarities) do
+            local roleId = Config.RolePings[rarity]
+            if roleId then
+                table.insert(mentions, "<@&" .. roleId .. ">")
+            end
+        end
+    end
+
+    local mentionStr = table.concat(mentions, " ")
+
     local Body = {
+        content = mentionStr,
         embeds = {
             {
                 title = Title,
@@ -39,6 +57,9 @@ local function SendWebhook(Title: string, Content: string, Color: number)
                 footer = { text = "Glory to Father Arlecchino" },
                 timestamp = GetTimestamp()
             }
+        },
+        allowed_mentions = {
+            roles = Config.RolePings -- only allows the listed roles
         }
     }
 
@@ -55,6 +76,15 @@ end
 --// Data collector (Common/Rare/Epic/Legendary)
 local function CollectData()
     local lines = {}
+    local raritiesFound = {}
+    local highestRarity = "Common"
+    local rarityOrder = { "Legendary", "Epic", "Rare", "Common" }
+    local rarityLabels = {
+        Common = "Common Box",
+        Rare = "Rare Box",
+        Epic = "Epic Box",
+        Legendary = "Legendary Box",
+    }
 
     local guiRoot = LocalPlayer:WaitForChild("PlayerGui")
         :WaitForChild("Event")
@@ -69,26 +99,16 @@ local function CollectData()
         end)
         if ok and obj and obj:IsA("TextLabel") then
             -- extract number from formats like "x3 stock" or "x0 stock"
-            local num = tonumber(obj.Text:match("%d+"))
-            return num or 0
+            return tonumber(obj.Text:match("%d+")) or 0
         end
         return 0
     end
-
-    local rarityOrder = { "Legendary", "Epic", "Rare", "Common" }
-    local rarityLabels = {
-        Common = "Common Box",
-        Rare = "Rare Box",
-        Epic = "Epic Box",
-        Legendary = "Legendary Box",
-    }
-
-    local highestRarity = "Common"
 
 	for _, rarity in ipairs(rarityOrder) do
 		local count = getStockCount(rarity)
 		if count > 0 then
 			table.insert(lines, rarityLabels[rarity] .. " x" .. tostring(count))
+            table.insert(raritiesFound, rarity)
 			if highestRarity == "Common" then
             -- only set once, at the first highest rarity found
             highestRarity = rarity
@@ -120,8 +140,8 @@ local function StartWatcher()
             if not (prevText:match("^Refresh stock in 1[0-1]m") or prevText:match("^Refresh stock in 9m")) then
                 debounce = true
                 task.delay(1, function() -- wait for stock GUI update
-                    local data, color = CollectData()
-                    SendWebhook("EVENT BOX STOCK", data, color)
+                    local data, color, rarities = CollectData()
+                    SendWebhook("EVENT BOX STOCK", data, color, rarities)
                     task.delay(599, function()
                         debounce = false -- allow next cycle
                     end)
