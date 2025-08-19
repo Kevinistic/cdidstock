@@ -107,7 +107,7 @@ local function StartWatcher()
         :WaitForChild("Canvas")
         :WaitForChild("Main")
         :WaitForChild("CanvasGroup")
-        :WaitForChild("TextLabel") -- "Refresh stock in 3m 23s"
+        :WaitForChild("TextLabel") -- "Refresh stock in 9m 23s"
 
     local prevText = ""
     local debounce = false
@@ -115,16 +115,18 @@ local function StartWatcher()
     refreshLabel:GetPropertyChangedSignal("Text"):Connect(function()
         local text = refreshLabel.Text
 
-        -- Detect transition into "9m xx s"
-        if not debounce and text:match("^Refresh stock in 9m") and not prevText:match("^Refresh stock in 9m") then
-            debounce = true
-            task.delay(1, function() -- wait a bit for stock GUI to update
-                local data, color = CollectData()
-                SendWebhook("EVENT BOX STOCK", data, color)
-                task.delay(599, function() -- 10m cooldown before next possible trigger
-                    debounce = false
+        -- Detect reset (when it jumps back to 9m–10m range)
+        if not debounce and text:match("^Refresh stock in 1[0-1]m") or text:match("^Refresh stock in 9m") then
+            if not (prevText:match("^Refresh stock in 1[0-1]m") or prevText:match("^Refresh stock in 9m")) then
+                debounce = true
+                task.delay(1, function() -- wait for stock GUI update
+                    local data, color = CollectData()
+                    SendWebhook("EVENT BOX STOCK", data, color)
+                    task.delay(599, function()
+                        debounce = false -- allow next cycle
+                    end)
                 end)
-            end)
+            end
         end
 
         prevText = text
