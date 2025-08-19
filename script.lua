@@ -36,11 +36,14 @@ local function SendWebhook(Title: string, Content: string, Color: number, rariti
     if not Config.Enabled then return end
 
     local mentions = {}
-    if Config.RolePingEnabled then
+    local allowedRoles= {}
+
+    if Config.RolePingEnabled and rarities and #rarities > 0 then
         for _, rarity in ipairs(rarities) do
             local roleId = Config.RolePings[rarity]
             if roleId then
                 table.insert(mentions, "<@&" .. roleId .. ">")
+                table.insert(allowedRoles, roleId)
             end
         end
     end
@@ -57,11 +60,14 @@ local function SendWebhook(Title: string, Content: string, Color: number, rariti
                 footer = { text = "Glory to Father Arlecchino" },
                 timestamp = GetTimestamp()
             }
-        },
-        allowed_mentions = {
-            roles = Config.RolePings -- only allows the listed roles
         }
     }
+
+    if #allowedRoles > 0 then
+        Body.allowed_mentions = {
+            roles = allowedRoles
+        }
+    end
 
     local RequestData = {
         Url = Config.Webhook,
@@ -116,7 +122,7 @@ local function CollectData()
 		end
 	end
 
-	return table.concat(lines, "\n"), Config.Colors[highestRarity]
+	return table.concat(lines, "\n"), Config.Colors[highestRarity], raritiesFound
 
 end
 
