@@ -16,6 +16,7 @@ local Config = {
     Enabled = true,
     AntiAFKEnabled = true,
     RolePingEnabled = true,
+    KillSwitchEnabled = true,
     Webhook = "https://discord.com/api/webhooks/...", -- replace with your actual webhook URL
     Colors = {
         Common = 0x5AC73C,
@@ -127,5 +128,42 @@ LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new(0,0))
 end)
+
+--// Setup Kill / Kick Webhook
+local function SetupKillSwitch()
+    if not Config.KillSwitchEnabled then return end
+
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+
+    local function SendKickWebhook(reason)
+        SendWebhook(
+            "DISCONNECTED",
+            "Reason: " .. tostring(reason),
+            0xFF0000,
+            {}
+        )
+    end
+
+    -- Trigger if local player is removed (kicked, ban, server shutdown)
+    Players.PlayerRemoving:Connect(function(player)
+        if player == LocalPlayer then
+            SendKickWebhook("Bot removed (kicked or server shutdown)")
+        end
+    end)
+
+    -- Watch for other players joining, and leave if someone joins
+    Players.PlayerAdded:Connect(function(plr)
+        if plr ~= LocalPlayer then
+            local timestamp = DateTime.now():ToIsoDate()
+            SendKickWebhook(
+                "Another player joined: " .. plr.Name .. "\nTime: " .. timestamp)
+            -- Kick yourself safely to leave
+            LocalPlayer:Kick("Another player joined: " .. plr.Name)
+        end
+    end)
+end
+
+SetupKillSwitch()
 
 print("Event Stock Bot Loaded")
