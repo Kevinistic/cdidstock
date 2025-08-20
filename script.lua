@@ -51,7 +51,7 @@ local function SendWebhook(Title, Content, Color, rarities)
             description = Content,
             color = Color,
             footer = {
-                text = "Brought to you by Arlecchino."
+                text = "Brought to you by Arlecchino.",
                 icon_url = "https://i.imgur.com/JdlwG9w.jpeg"
             },
         }}
