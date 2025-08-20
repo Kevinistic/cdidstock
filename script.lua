@@ -30,10 +30,6 @@ local Config = {
 }
 
 --// Utility
-local function GetTimestamp()
-    return DateTime.now():ToIsoDate()
-end
-
 local function SendWebhook(Title, Content, Color, rarities)
     if not Config.Enabled then return end
 
@@ -54,8 +50,10 @@ local function SendWebhook(Title, Content, Color, rarities)
             title = Title,
             description = Content,
             color = Color,
-            footer = { text = "If there are no updates, stock is the same as before" },
-            timestamp = GetTimestamp()
+            footer = {
+                text = "Brought to you by Arlecchino."
+                icon_url = "https://i.imgur.com/JdlwG9w.jpeg"
+            },
         }}
     }
 
@@ -91,12 +89,15 @@ local function CheckStock()
     if not success or not data then return end
 
     local lines, raritiesFound, highestRarity = {}, {}, "Common"
+    local rarityPriority = {Common=1, Rare=2, Epic=3, Legendary=4}
+
     for _, item in ipairs(data.items) do
         local count = item.stock
         if count > 0 then
             table.insert(lines, item.id .. " x" .. count)
             table.insert(raritiesFound, item.tier)
-            if highestRarity == "Common" and (item.tier ~= "Common") then
+
+            if rarityPriority[item.tier] > rarityPriority[highestRarity] then
                 highestRarity = item.tier
             end
         end
