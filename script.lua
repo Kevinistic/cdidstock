@@ -30,6 +30,13 @@ local Config = {
     }
 }
 
+-- Prevent duplicate runs
+if _G.EventStockBotLoaded then
+    warn("Event Stock Bot is already running.")
+    return
+end
+_G.EventStockBotLoaded = true
+
 --// Utility
 local function SendWebhook(Title, Content, Color, rarities)
     if not Config.Enabled then return end
