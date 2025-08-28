@@ -86,12 +86,28 @@ def build_payload_from_counts(counts: dict):
                 mentions.append(f"<@&{role_id}>")
                 allowed_roles.append(role_id)
 
-    description = "\n".join(lines) if lines else "No stock"
+    # LEGACY
+    # description = "\n".join(lines) if lines else "No stock"
 
+    # embed = {
+    #     "title": "EVENT BOX STOCK",
+    #     "description": description,
+    #     "color": COLORS.get(highest, COLORS["Common"]),
+    #     "footer": {"text": FOOTER_TEXT, "icon_url": FOOTER_ICON},
+    # }
+
+    embed_title = ""
+    if highest == "Epic" and "Legendary" not in rarities_found:
+        embed_title = "EPIC"
+    elif highest == "Legendary" and "Epic" not in rarities_found:
+        embed_title = "LEGENDARY"
+    elif highest == "Legendary" and "Epic" in rarities_found:
+        embed_title = "EPIC AND LEGENDARY"
+    
     embed = {
-        "title": "EVENT BOX STOCK",
-        "description": description,
-        "color": COLORS.get(highest, COLORS["Common"]),
+        "title": f"{embed_title} BOX HAS APPEARED!",
+        "description": "placeholder text idk what to put here",
+        "color": COLORS.get(highest, COLORS["Epic"]),
         "footer": {"text": FOOTER_TEXT, "icon_url": FOOTER_ICON},
     }
 
@@ -206,11 +222,12 @@ async def run():
                                 boxes_text = await extract_boxes_text(embed)
                                 if boxes_text:
                                     counts = parse_counts_from_text(boxes_text)
-                                    payload, rarities_found = build_payload_from_counts(counts)
 
                                     if counts.get("Epic", 0) > 0 or counts.get("Legendary", 0) > 0:
+                                        payload, rarities_found = build_payload_from_counts(counts) # build only when epic/legendary
+
                                         await send_payload(payload)
-                                        print(f"[+] Posted: {payload['embeds'][0]['description'].replace(chr(10),' | ')}")
+                                        print(f"[+] Posted: ({' & '.join(rarities_found)}) boxes found.")
                                     else:
                                         print("[Skipped] No Epic or Legendary boxes found.")
 
