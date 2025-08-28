@@ -1,16 +1,9 @@
 # cdidstock
 gag ahh gameplay<br/>
-use at your own risk
+this is my bot to view and forward messages in discord
 
 ## Prerequisites
-1. have an exec
-2. click 'script.lua' above
-3. copypaste whole thing onto your exec
-4. open Discord
-5. make a private server, create a specific channel
-6. click Edit Channel > Integrations > Webhooks
-7. create a webhook, copy and paste it into the script
-8. run
+wip
 
 ## Credits
 - @cn3z on Discord: everything lol
