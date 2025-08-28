@@ -1,6 +1,5 @@
 # cdidstock
-gag ahh gameplay<br/>
-this is my bot to view and forward messages in discord
+gag ahh gameplay
 
 ## Prerequisites
 wip
