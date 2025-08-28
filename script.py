@@ -4,6 +4,7 @@ import os
 import random
 import requests
 from playwright.async_api import async_playwright
+from datetime import datetime  # <-- add this import
 
 # ==============================
 # LOAD CONFIG
@@ -148,7 +149,8 @@ async def send_critical_alert():
         ]
     }
     await send_payload(payload)
-    print("[ALERT] Critical alert webhook sent!")
+    now_str = datetime.now().strftime("%H:%M")
+    print(f"[ALERT {now_str}] Critical alert webhook sent!")
 
 
 async def watchdog_timer():
@@ -217,7 +219,8 @@ async def run():
 
                             if bot_tag and embed:
                                 username = await username_span.inner_text() if username_span else "Unknown"
-                                print(f"[Webhook Detected] {username}")
+                                now_str = datetime.now().strftime("%H:%M")
+                                print(f"[Webhook Detected {now_str}] {username}")
 
                                 boxes_text = await extract_boxes_text(embed)
                                 if boxes_text:
